@@ -20,8 +20,8 @@ fun gameLoop() {
 
     //spawn a big creep if we have plenty of energy
     for ((_, room) in Game.rooms) {
-        if (room.energyAvailable > 549) {
-            mainSpawn.spawnCreep(
+        if (room.energyAvailable > 549) 
+{            mainSpawn.spawnCreep(
                 arrayOf(
                     WORK,
                     WORK,
