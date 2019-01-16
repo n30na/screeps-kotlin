@@ -1,3 +1,4 @@
+import screeps.api.Game
 import starter.gameLoop
 
 /**
@@ -6,6 +7,7 @@ import starter.gameLoop
  *
  * must not be removed by DCE
  */
+
 @Suppress("unused")
 fun loop() {
     gameLoop()
