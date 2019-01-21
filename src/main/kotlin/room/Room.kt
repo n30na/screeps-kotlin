@@ -1,5 +1,6 @@
 package room
 
+import memory.ScreepsMemory
 import screeps.api.Room
 import screeps.api.structures.StructureSpawn
 import structure.spawn.SpawnQueue
