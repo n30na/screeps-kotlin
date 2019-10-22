@@ -1,8 +1,6 @@
 package structure.spawn
 
-import creep.CreepBody
 import screeps.api.*
-import screeps.utils.memory.memory
 import screeps.utils.unsafe.delete
 
 inline fun keys(json: dynamic) = js("Object").keys(json).unsafeCast<Array<String>>()
@@ -35,19 +33,20 @@ data class SpawnQueueItem(var name: String, var priority: Int, var body: List<Bo
     }
 }
 
-class SpawnQueue(val room: String) {
+class SpawnQueue(val roomName: String) {
     private var cachedQueue: MutableList<SpawnQueueItem> = mutableListOf()
     private var cacheInitialized = false
     var sorted = false
+
     val queue: List<SpawnQueueItem>
         get() {
             if (cacheInitialized) return cachedQueue
             cachedQueue =  mutableListOf()
-            for (name in keys(Memory["rooms"][room]["queue"])) {
-                if(Memory["rooms"][room]["queue"][name] as? StoredSpawnQueueItem == null) {
-                    delete(Memory["rooms"][room]["queue"][name])
+            for (name in keys(Memory["rooms"][roomName]["queue"])) {
+                if(Memory["rooms"][roomName]["queue"][name] as? StoredSpawnQueueItem == null) {
+                    delete(Memory["rooms"][roomName]["queue"][name])
                 } else {
-                    cachedQueue.add( SpawnQueueItem(name, Memory["rooms"][room]["queue"][name] as StoredSpawnQueueItem) )
+                    cachedQueue.add( SpawnQueueItem(name, Memory["rooms"][roomName]["queue"][name] as StoredSpawnQueueItem) )
                 }
             }
             cacheInitialized = true
@@ -73,6 +72,6 @@ class SpawnQueue(val room: String) {
             queue.find {it.name == name} != null
 
     fun add(item: SpawnQueueItem) {
-
+        sorted = false;
     }
 }
