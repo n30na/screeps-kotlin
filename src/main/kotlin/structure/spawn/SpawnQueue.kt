@@ -36,7 +36,7 @@ data class SpawnQueueItem(var name: String, var priority: Int, var body: List<Bo
 class SpawnQueue(val roomName: String) {
     private var cachedQueue: MutableList<SpawnQueueItem> = mutableListOf()
     private var cacheInitialized = false
-    var sorted = false
+    private var sorted = false
 
     val queue: List<SpawnQueueItem>
         get() {
@@ -51,6 +51,22 @@ class SpawnQueue(val roomName: String) {
             }
             cacheInitialized = true
             return cachedQueue.toList()
+        }
+    val sortedQueue: List<SpawnQueueItem>
+    get() {
+        if(!sorted) sort()
+        return queue
+    }
+
+    val next: SpawnQueueItem
+        get() {
+            if (!sorted) sort()
+            return queue[0]
+        }
+
+    private inline val queueStorage: dynamic
+        get() {
+            return Memory["rooms"][roomName]["queue"]  // TODO: VERIFY THIS TYPE OF PASSING WORKS
         }
 
     private fun sort() {
@@ -71,7 +87,25 @@ class SpawnQueue(val roomName: String) {
     fun contains(name: String): Boolean =
             queue.find {it.name == name} != null
 
-    fun add(item: SpawnQueueItem) {
-        sorted = false;
+    fun add(item: SpawnQueueItem) {  // TODO: VERIFY COMPLETION
+        Memory["rooms"][roomName]["queue"][item.name] = item.toObject()
+        if(cacheInitialized) {
+            cachedQueue.add(item)
+        }
+        sorted = false
+    }
+
+    fun remove(itemName: String) {  // TODO: VERIFY queueStorage passes correctly
+        if(queueStorage[itemName] != null) {
+            delete(queueStorage[itemName])
+            cacheInitialized = false  // TODO: actually remove from cache instead of forcing cache rebuild
+            sorted = false
+        }
+    }
+
+    fun pop(): SpawnQueueItem {
+        val poppedItem: SpawnQueueItem = next
+        remove(poppedItem.name)
+        return poppedItem
     }
 }
