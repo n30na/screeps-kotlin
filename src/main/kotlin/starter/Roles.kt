@@ -1,8 +1,8 @@
 package starter
 
 import screeps.api.*
-import screeps.api.structures.Structure
 import screeps.api.structures.StructureController
+import screeps.api.structures.StructureExtension
 import screeps.api.structures.StructureSpawn
 
 
@@ -10,74 +10,52 @@ enum class Role {
     UNASSIGNED,
     HARVESTER,
     BUILDER,
-    UPGRADER
+    UPGRADER,
+    WORKER,
+    SOURCER,
+    CARRY,
+    RESERVER
+}
+enum class WorkAction {
+    HARVESTING,
+    WAITING,
+    BUILDING,
+    UPGRADING,
+    CARRYING,
+    SOURCING,
+    REPAIRING,
+    ATTACKING,
+    RESERVING,
+    MOVING
+}
+val workPriorities = mapOf<WorkAction,Int>(
+        WorkAction.HARVESTING to 1,
+        WorkAction.REPAIRING to 2,
+        WorkAction.BUILDING to 3,
+        WorkAction.UPGRADING to 4,
+        WorkAction.WAITING to 10
+)
+
+fun Creep.roleWorker() {
+
 }
 
-fun Creep.upgrade(controller: StructureController) {
-    if (carry.energy == 0) {
-        val sources = room.find(FIND_SOURCES)
-        if (harvest(sources[0]) == ERR_NOT_IN_RANGE) {
-            moveTo(sources[0].pos)
-        }
-    } else {
-        if (upgradeController(controller) == ERR_NOT_IN_RANGE) {
-            moveTo(controller.pos)
-        }
-    }
+fun Creep.roleSourcer() {
+
 }
 
-fun Creep.pause() {
-    if (memory.pause < 10) {
-        //blink slowly
-        if (memory.pause % 3 != 0) say("\uD83D\uDEAC")
-        memory.pause++
-    } else {
-        memory.pause = 0
-        memory.role = Role.HARVESTER
-    }
+fun Creep.roleCarry() {
+
 }
 
-fun Creep.build(assignedRoom: Room = this.room) {
-    if (memory.building && carry.energy == 0) {
-        memory.building = false
-        say("🔄 harvest")
-    }
-    if (!memory.building && carry.energy == carryCapacity) {
-        memory.building = true
-        say("🚧 build")
-    }
+fun Creep.roleReserver() {
 
-    if (memory.building) {
-        val targets = assignedRoom.find(FIND_MY_CONSTRUCTION_SITES)
-        if (targets.isNotEmpty()) {
-            if (build(targets[0]) == ERR_NOT_IN_RANGE) {
-                moveTo(targets[0].pos)
-            }
-        }
-    } else {
-        val sources = room.find(FIND_SOURCES)
-        if (harvest(sources[0]) == ERR_NOT_IN_RANGE) {
-            moveTo(sources[0].pos)
-        }
-    }
 }
 
-fun Creep.harvest(fromRoom: Room = this.room, toRoom: Room = this.room) {
-    if (carry.energy < carryCapacity) {
-        val sources = fromRoom.find(FIND_SOURCES)
-        if (harvest(sources[0]) == ERR_NOT_IN_RANGE) {
-            moveTo(sources[0].pos)
-        }
-    } else {
-        val targets = toRoom.find(FIND_MY_STRUCTURES)
-            .filter { (it.structureType == STRUCTURE_EXTENSION || it.structureType == STRUCTURE_SPAWN) }
-            .map { (it as StructureSpawn) }
-            .filter { it.energy < it.energyCapacity }
+fun Creep.roleDefender() {
 
-        if (targets.isNotEmpty()) {
-            if (transfer(targets[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-                moveTo(targets[0].pos)
-            }
-        }
-    }
+}
+
+fun Creep.roleAttacker() {
+
 }

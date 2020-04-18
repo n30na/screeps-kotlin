@@ -7,7 +7,7 @@ import screeps.utils.unsafe.delete
 import screeps.utils.unsafe.jsObject
 
 
-private val minPopulations = arrayOf(Role.HARVESTER to 2, Role.UPGRADER to 1, Role.BUILDER to 2)
+private val minPopulations = arrayOf(Role.HARVESTER to 3, Role.UPGRADER to 1, Role.BUILDER to 3, Role.UPGRADER to 4)
 
 fun gameLoop() {
     val mainSpawn: StructureSpawn = Game.spawns["Spawn1"] ?: return
@@ -19,7 +19,7 @@ fun gameLoop() {
     spawnCreeps(minPopulations, Game.creeps.values, mainSpawn)
 
     //spawn a big creep if we have plenty of energy
-    for ((_, room) in Game.rooms) {
+    /*for ((_, room) in Game.rooms) {
         if (room.energyAvailable > 549) {
             mainSpawn.spawnCreep(
                 arrayOf(
@@ -34,18 +34,18 @@ fun gameLoop() {
                 "HarvesterBig_${Game.time}",
                 options {
                     memory = jsObject<CreepMemory> {
-                        this.role = Role.HARVESTER
+                        this.role = Role.UPGRADER
                     }
                 }
             )
         }
-    }
+    }*/
 
     for ((_, creep) in Game.creeps) {
         when (creep.memory.role) {
-            Role.HARVESTER -> creep.harvest()
-            Role.BUILDER -> creep.build()
-            Role.UPGRADER -> creep.upgrade(mainSpawn.room.controller!!)
+            Role.HARVESTER -> creep.runActionHarvest()
+            Role.BUILDER -> creep.runActionBuild()
+            Role.UPGRADER -> creep.runActionUpgrade(mainSpawn.room.controller!!)
             else -> creep.pause()
         }
     }
@@ -57,20 +57,34 @@ private fun spawnCreeps(
     creeps: Array<Creep>,
     spawn: StructureSpawn
 ) {
+    val bodyBig: Array<BodyPartConstant> = arrayOf<BodyPartConstant>(WORK,WORK,WORK,CARRY,CARRY,MOVE,MOVE, MOVE)
+    val bodySmall: Array<BodyPartConstant> = arrayOf<BodyPartConstant>(WORK,CARRY, MOVE)
+
     for ((role, min) in minPopulations) {
         val current = creeps.filter { it.memory.role == role }
         if (current.size < min) {
             val newName = "${role.name}_${Game.time}"
-            val body = arrayOf<BodyPartConstant>(WORK, CARRY, MOVE)
-            val code = spawn.spawnCreep(body, newName, options {
+            val code = spawn.spawnCreep(bodyBig, newName, options {
                 memory = jsObject<CreepMemory> { this.role = role }
             })
 
             when (code) {
-                OK -> console.log("spawning $newName with body $body")
-                ERR_BUSY, ERR_NOT_ENOUGH_ENERGY -> run { } // do nothing
+                OK -> console.log("spawning $newName with body $bodyBig")
+                ERR_BUSY -> run { } // do nothing
+                ERR_NOT_ENOUGH_ENERGY -> run {
+                    if (spawn.room.energyAvailable >= 200) {
+                        spawn.spawnCreep(bodySmall, newName, options {
+                            memory = jsObject<CreepMemory> { this.role = role }
+                        })
+                        console.log("spawning $newName with body $bodySmall")
+
+                    }
+                }
                 else -> console.log("unhandled error code $code")
             }
+
+
+
 
         }
     }
