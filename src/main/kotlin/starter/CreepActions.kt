@@ -30,7 +30,7 @@ fun Creep.harvest(): ScreepsReturnCode {
     return code
 }
 
-fun Creep.idleRally(): ScreepsReturnCode { //TODO: basic implementation
+fun Creep.idleRally(): ScreepsReturnCode { //TODO: not implemented
     var code = ERR_VOID
     val rallyFlags =  room.find(FIND_FLAGS).filter { it.color == COLOR_GREEN && it.secondaryColor == COLOR_GREEN}
     if(rallyFlags.isNotEmpty()) {
@@ -40,7 +40,7 @@ fun Creep.idleRally(): ScreepsReturnCode { //TODO: basic implementation
     return code
 }
 
-fun Creep.goTo(target: RoomObject): ScreepsReturnCode { //TODO: basic implementation
+fun Creep.goTo(target: RoomObject): ScreepsReturnCode { //TODO: not implemented
     var code = ERR_VOID
 
     return code
@@ -63,7 +63,100 @@ fun Creep.pause() {  //TODO: check for redundancy and reworking
     }
 }
 
-fun Creep.runActionUpgrade(controller: StructureController) {
+fun Creep.runActionBuild(): ScreepsReturnCode {
+    var returnCode = ERR_VOID
+
+    val targets = homeRoom.find(FIND_MY_CONSTRUCTION_SITES)
+    if (targets.isNotEmpty()) {
+        returnCode = build(targets[0])
+        if (returnCode == ERR_NOT_IN_RANGE) {
+            returnCode = moveTo(targets[0].pos)
+        }
+    } else returnCode = ERR_NOT_FOUND
+
+    return returnCode
+}
+
+fun Creep.runActionUpgrade(): ScreepsReturnCode {  // TODO: clean up casting mess
+    var returnCode = ERR_VOID
+
+    returnCode = upgradeController(homeRoom.controller!!)
+
+    if (returnCode == ERR_NOT_IN_RANGE) {
+        returnCode = moveTo(homeRoom.controller!!.pos)
+    }
+
+    return returnCode
+}
+
+fun Creep.runActionHarvest(): ScreepsReturnCode {  // TODO: actually decide which source to use
+    var returnCode = ERR_VOID
+
+    val sources = room.find(FIND_SOURCES)
+    if (sources.isNotEmpty()) {
+        returnCode = harvest(sources[0])
+        if (returnCode == ERR_NOT_IN_RANGE) {
+            returnCode = moveTo(sources[0].pos)
+        }
+    } else returnCode = ERR_NOT_FOUND
+
+    return returnCode
+}
+
+fun Creep.runActionRepair(): ScreepsReturnCode {
+    var returnCode = ERR_VOID
+
+    val repairable = room.find(FIND_STRUCTURES).filter {
+        it.hits != it.hitsMax
+                && it.structureType != STRUCTURE_RAMPART
+                && it.structureType != STRUCTURE_WALL
+                && it.structureType != STRUCTURE_CONTROLLER
+    }
+    if(repairable.isNotEmpty()) {
+        returnCode = repair(repairable[0])
+        if(returnCode == ERR_NOT_IN_RANGE) {
+            returnCode = moveTo(repairable[0])
+        }
+    } else returnCode = ERR_NOT_FOUND
+
+    return returnCode
+}
+
+fun Creep.runActionFill(): ScreepsReturnCode {  // TODO: redo, make better, etc
+    var returnCode = ERR_VOID
+
+    val targetSpawns = room.find(FIND_MY_STRUCTURES)
+            .filter { (it.structureType == STRUCTURE_SPAWN) }
+            .map { (it as StructureSpawn) }
+            .filter { it.energy < it.energyCapacity }
+
+    if (targetSpawns.isNotEmpty()) {
+        returnCode = transfer(targetSpawns[0], RESOURCE_ENERGY)
+        if (returnCode == ERR_NOT_IN_RANGE) {
+            returnCode = moveTo(targetSpawns[0].pos)
+        }
+    } else {
+        val targetExtensions = room.find(FIND_MY_STRUCTURES)
+                .filter { (it.structureType == STRUCTURE_EXTENSION) }
+                .map { (it as StructureExtension) }
+                .filter { it.energy < it.energyCapacity }
+
+        if (targetExtensions.isNotEmpty()) {
+            returnCode = transfer(targetExtensions[0], RESOURCE_ENERGY)
+            if (returnCode == ERR_NOT_IN_RANGE) {
+                returnCode = moveTo(targetExtensions[0].pos)
+            }
+        }
+    }
+
+    return returnCode
+}
+
+/*
+*  TODO: deprecate this stupid bullshit
+* */
+
+fun Creep.runActionUpgradeOld(controller: StructureController) {
     if(memory.harvesting || carry.energy == 0) {
         memory.harvesting = true
 
@@ -81,7 +174,7 @@ fun Creep.runActionUpgrade(controller: StructureController) {
     }
 }
 
-fun Creep.runActionBuild(assignedRoom: Room = this.room) {
+fun Creep.runActionBuildOld(assignedRoom: Room = this.room) {
     if (memory.building && carry.energy == 0) {
         memory.building = false
         say("🔄 harvest")
@@ -108,7 +201,7 @@ fun Creep.runActionBuild(assignedRoom: Room = this.room) {
     }
 }
 
-fun Creep.runActionHarvest(fromRoom: Room = this.room, toRoom: Room = this.room) {
+fun Creep.runActionHarvestOld(fromRoom: Room = this.room, toRoom: Room = this.room) {
     if (carry.energy < carryCapacity) {
         harvest()
     } else {

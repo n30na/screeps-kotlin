@@ -1,9 +1,6 @@
 package starter
 
 import screeps.api.*
-import screeps.api.structures.StructureController
-import screeps.api.structures.StructureExtension
-import screeps.api.structures.StructureSpawn
 
 
 enum class Role {
@@ -26,18 +23,38 @@ enum class WorkAction {
     REPAIRING,
     ATTACKING,
     RESERVING,
-    MOVING
+    MOVING,
+    WALLREPAIR,
+    FILLING
 }
-val workPriorities = mapOf<WorkAction,Int>(
-        WorkAction.HARVESTING to 1,
-        WorkAction.REPAIRING to 2,
-        WorkAction.BUILDING to 3,
-        WorkAction.UPGRADING to 4,
-        WorkAction.WAITING to 10
-)
+
 
 fun Creep.roleWorker() {
+    if(carry.energy == 0) {
+        memory.task = WorkAction.HARVESTING
+    } else if (memory.task == WorkAction.HARVESTING && carry.energy == carryCapacity) {
+        // TODO: make this use priorities instead of being hard coded
+        if (homeRoom.needsLabor(WorkAction.FILLING))
+            memory.task = WorkAction.FILLING
+        else if (homeRoom.requiredEnergy(WorkAction.REPAIRING) > 49 )
+            memory.task = WorkAction.REPAIRING
+        else if (homeRoom.needsLabor(WorkAction.BUILDING))
+            memory.task = WorkAction.BUILDING
+        else
+            memory.task = WorkAction.UPGRADING
 
+        say(memory.task.toString())
+    }
+
+    when(memory.task) {
+        WorkAction.HARVESTING -> runActionHarvest()
+        WorkAction.REPAIRING -> runActionRepair()
+        WorkAction.UPGRADING -> runActionUpgrade()
+        WorkAction.BUILDING -> runActionBuild()
+        WorkAction.FILLING -> runActionFill()
+        WorkAction.WAITING -> pause()  // TODO: rework
+        else -> {  }
+    }
 }
 
 fun Creep.roleSourcer() {
