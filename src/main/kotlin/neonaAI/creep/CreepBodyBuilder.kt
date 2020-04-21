@@ -1,8 +1,7 @@
-package starter
+package neonaAI.creep
 
 import screeps.api.BODYPART_COST
 import screeps.api.BodyPartConstant
-import screeps.api.WORK
 import screeps.api.get
 
 abstract class CreepBodyBuilder {
@@ -18,9 +17,12 @@ abstract class CreepBodyBuilder {
 
         return cost
     }
+    fun canSpawn(energy: Int): Boolean {
+        return minEnergyWithin(energy) != 0
+    }
 }
 
-class fixedBody(val body: Array<BodyPartConstant>): CreepBodyBuilder() {
+class FixedBody(val body: Array<BodyPartConstant>): CreepBodyBuilder() {
     override val minEnergyToSpawn = calcBodyCost(body)
 
     override fun genBody(energy: Int): Array<BodyPartConstant> {
@@ -38,7 +40,7 @@ class fixedBody(val body: Array<BodyPartConstant>): CreepBodyBuilder() {
     }
 }
 
-class ratioBody(val partRatios: Map<BodyPartConstant, Int>): CreepBodyBuilder() {
+class RatioBody(val partRatios: Map<BodyPartConstant, Int>, val maxMultiplier: Int = 0): CreepBodyBuilder() {
     override val minEnergyToSpawn: Int
         get() {
             var energy = 0
@@ -54,7 +56,9 @@ class ratioBody(val partRatios: Map<BodyPartConstant, Int>): CreepBodyBuilder() 
         val returnBody: MutableList<BodyPartConstant> = mutableListOf()
 
         if (energy >= minEnergyToSpawn) {
-            val multiplier: Int = energy/minEnergyToSpawn
+            val multiplier: Int =
+                    if(maxMultiplier != 0 && energy/minEnergyToSpawn > maxMultiplier) maxMultiplier
+                    else energy/minEnergyToSpawn
 
             for((part, count) in partRatios)
                 for(x in 1..count*multiplier) returnBody.add(part)

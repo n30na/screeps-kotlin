@@ -1,7 +1,7 @@
-package starter
+package neonaAI
 
+import neonaAI.creep.*
 import screeps.api.*
-import screeps.api.structures.Structure
 import screeps.api.structures.StructureExtension
 import screeps.api.structures.StructureSpawn
 import screeps.api.structures.StructureTower
@@ -22,7 +22,7 @@ fun Room.workerCarry(action: WorkAction): Int {
 
     for((_, creep) in Game.creeps) {
         if(creep.memory.homeRoom == name && creep.memory.task == action)
-            count += creep.carry.energy
+            count += creep.store[RESOURCE_ENERGY]?:0
     }
 
     return count
@@ -76,14 +76,16 @@ fun Room.requiredEnergy(action: WorkAction): Int {
             if(holdEnergy.isNotEmpty()) {
                 for(structure in holdEnergy) {
                     when(structure.structureType) {
-                        STRUCTURE_EXTENSION -> energy += (structure as StructureExtension).energyCapacity - structure.energy
-                        STRUCTURE_SPAWN -> energy += (structure as StructureSpawn).energyCapacity - structure.energy
-                        STRUCTURE_TOWER -> energy += (structure as StructureTower).energyCapacity - structure.energy
+                        STRUCTURE_EXTENSION -> energy += (structure as StructureExtension).store.getFreeCapacity(RESOURCE_ENERGY)?:0
+                        STRUCTURE_SPAWN -> energy += (structure as StructureSpawn).store.getFreeCapacity(RESOURCE_ENERGY)?:0
+                        STRUCTURE_TOWER -> energy += (structure as StructureTower).store.getFreeCapacity(RESOURCE_ENERGY)?:0
+                                ?:0
                     }
                 }
             }
         }
         else -> {
+            println("invalid action checked: $action")
             energy = 0
         }
     }

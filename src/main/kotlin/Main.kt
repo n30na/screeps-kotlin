@@ -1,4 +1,4 @@
-import starter.gameLoop
+import neonaAI.gameLoop
 
 /**
  * Entry point
