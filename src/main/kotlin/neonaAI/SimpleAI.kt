@@ -27,6 +27,7 @@ fun gameLoop() {
         try {
             when (creep.memory.role) {
                 Role.WORKER -> creep.roleWorker()
+                Role.DEFENDER -> creep.roleDefender()
                 else -> creep.say("\uD83D\uDEAC")
             }
         } catch(exception: dynamic) {
@@ -39,32 +40,47 @@ fun gameLoop() {
 private fun spawnCreeps(room: Room) {
 
     val genericBody = RatioBody(mapOf(WORK to 1, CARRY to 1, MOVE to 1), 5)
-    val genericFighter = RatioBody(mapOf(TOUGH to 1, ATTACK to 1, MOVE to 1))
+    val genericFighter = RatioBody(mapOf(TOUGH to 1, MOVE to 1, ATTACK to 1))
 
-    if(room.find(FIND_HOSTILE_CREEPS).isNotEmpty() && room.roleCount(Role.DEFENDER) < 2)
-
-    if(room.roleCount(Role.WORKER) < 8) {
-        val role = Role.WORKER
+    if(room.find(FIND_HOSTILE_CREEPS).isNotEmpty() && room.roleCount(Role.DEFENDER) < 2) {
+        val role = Role.DEFENDER
         val newName = "${role.name}_${Game.time}"
         val spawns = room.availableSpawns()
-        val body: CreepBodyBuilder =
-            if(room.creepCount() < 1) FixedBody(arrayOf(WORK, CARRY, MOVE))
-            else genericBody
+        val body: CreepBodyBuilder =  genericFighter
 
-        if(spawns.isNotEmpty() && body.minEnergyWithin(room.energyCapacityAvailable) <= room.energyAvailable) {
-            val code = spawns[0].spawnCreep(body.genBody(room.energyCapacityAvailable), newName, options {
+        if(spawns.isNotEmpty() && body.minEnergyToSpawn <= room.energyAvailable) {
+            val code = spawns[0].spawnCreep(body.genBody(room.energyAvailable), newName, options {
                 memory = jsObject<CreepMemory> { this.role = role; this.homeRoom = room.name }
             })
             when (code) {
-                OK -> console.log("spawning $newName with body ${body.genBody(room.energyCapacityAvailable)}")
+                OK -> console.log("spawning $newName with body ${body.genBody(room.energyAvailable)}")
                 ERR_BUSY -> run { } // do nothing
                 ERR_NOT_ENOUGH_ENERGY -> run {}
                 else -> console.log("unhandled error code $code")
             }
         }
+    } else if(room.roleCount(Role.WORKER) < 8) {
+            val role = Role.WORKER
+            val newName = "${role.name}_${Game.time}"
+            val spawns = room.availableSpawns()
+            val body: CreepBodyBuilder =
+                if(room.creepCount() < 1) FixedBody(arrayOf(WORK, CARRY, MOVE))
+                else genericBody
 
+            if(spawns.isNotEmpty() && body.minEnergyWithin(room.energyCapacityAvailable) <= room.energyAvailable) {
+                val code = spawns[0].spawnCreep(body.genBody(room.energyCapacityAvailable), newName, options {
+                    memory = jsObject<CreepMemory> { this.role = role; this.homeRoom = room.name }
+                })
+                when (code) {
+                    OK -> console.log("spawning $newName with body ${body.genBody(room.energyCapacityAvailable)}")
+                    ERR_BUSY -> run { } // do nothing
+                    ERR_NOT_ENOUGH_ENERGY -> run {}
+                    else -> console.log("unhandled error code $code")
+                }
+            }
+
+        }
     }
-}
 
 private fun houseKeeping(creeps: Record<String, Creep>) {
     for ((creepName, _) in Memory.creeps) {

@@ -77,7 +77,14 @@ fun Creep.roleReserver() {
 }
 
 fun Creep.roleDefender() {
+    val target = pos.findClosestByPath(FIND_HOSTILE_CREEPS)
 
+    if(target != null)
+        if(pos.inRangeTo(target.pos,1)) {
+            attack(target)
+        } else {
+            moveTo(target)
+        }
 }
 
 fun Creep.roleAttacker() {
