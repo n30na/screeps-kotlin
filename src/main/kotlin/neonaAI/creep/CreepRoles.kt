@@ -5,7 +5,7 @@ import neonaAI.requiredEnergy
 import screeps.api.*
 
 
-enum class Role {
+enum class CreepRole {
     UNASSIGNED,
     UPGRADER,
     WORKER,
@@ -85,6 +85,8 @@ fun Creep.roleDefender() {
         } else {
             moveTo(target)
         }
+    else
+        idleRally()
 }
 
 fun Creep.roleAttacker() {

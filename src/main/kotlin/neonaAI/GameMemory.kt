@@ -1,7 +1,7 @@
 package neonaAI
 
 import neonaAI.creep.FixedBody
-import neonaAI.creep.Role
+import neonaAI.creep.CreepRole
 import neonaAI.creep.WorkAction
 import screeps.api.MOVE
 import screeps.api.Memory
@@ -23,18 +23,18 @@ var workPriorities = mapOf<WorkAction,Int>(
         WorkAction.UPGRADING to 4,
         WorkAction.WAITING to 10
 )
-val baseRoleMinimums: Map<RoomStage,Map<Role,Int>> = mapOf<RoomStage,Map<Role,Int>>(
+val baseRoleMinimums: Map<RoomStage,Map<CreepRole,Int>> = mapOf<RoomStage,Map<CreepRole,Int>>(
     RoomStage.HARVESTING to mapOf(
-            Role.WORKER to 8
+            CreepRole.WORKER to 8
     ),
     RoomStage.SOURCING to mapOf(
-            Role.WORKER to 6,
-            Role.SOURCER to 0
+            CreepRole.WORKER to 6,
+            CreepRole.SOURCER to 0
     ),
     RoomStage.STORING to mapOf(
-            Role.WORKER to 4,
-            Role.SOURCER to 0,
-            Role.CARRY to 2
+            CreepRole.WORKER to 4,
+            CreepRole.SOURCER to 0,
+            CreepRole.CARRY to 2
     )
 )
 val sourcerBody = FixedBody(arrayOf(WORK,WORK,WORK,WORK,WORK,MOVE))

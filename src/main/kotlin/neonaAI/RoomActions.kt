@@ -28,7 +28,7 @@ fun Room.workerCarry(action: WorkAction): Int {
     return count
 }
 
-fun Room.roleCount(role: Role): Int {
+fun Room.roleCount(role: CreepRole): Int {
     var count = 0
 
     for((_, creep) in Game.creeps) {
@@ -117,4 +117,20 @@ fun Room.availableSpawns(): List<StructureSpawn> {
     }
 
     return spawns
+}
+
+fun Room.spawnCreep(body: CreepBodyBuilder, role: CreepRole) {
+    val newName = "${role.name}_${Game.time}"
+    val spawns = availableSpawns()
+
+    if(spawns.isNotEmpty() && body.minEnergyWithin(energyCapacityAvailable) <= energyAvailable) {
+        val code = spawns[0].spawnCreep(body.genBody(energyCapacityAvailable), newName, options {
+            memory = screeps.utils.unsafe.jsObject<CreepMemory> { this.role = role; this.homeRoom = name }
+        })
+        when (code) {
+            OK -> console.log("spawning $newName with body ${body.genBody(energyCapacityAvailable)}")
+            ERR_BUSY, ERR_NOT_ENOUGH_ENERGY -> run { } // do nothing
+            else -> console.log("unhandled error code $code")
+        }
+    }
 }

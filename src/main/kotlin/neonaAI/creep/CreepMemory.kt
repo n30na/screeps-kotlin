@@ -3,7 +3,7 @@ package neonaAI.creep
 import screeps.api.*
 import screeps.utils.memory.memory
 
-var CreepMemory.role by memory(Role.UNASSIGNED)
+var CreepMemory.role by memory(CreepRole.UNASSIGNED)
 var CreepMemory.harvesting: Boolean by memory { false }
 var CreepMemory.harvestSourceIndex: Int by memory { 0 }
 var CreepMemory.target: String by memory { "" }  //ID of the target

@@ -32,8 +32,8 @@ fun Creep.harvest(): ScreepsReturnCode {
     return code
 }
 
-fun Creep.idleRally(): ScreepsReturnCode { //TODO: not implemented
-    var code: ScreepsReturnCode
+fun Creep.idleRally(): ScreepsReturnCode {
+    val code: ScreepsReturnCode
     val rallyFlags =  room.find(FIND_FLAGS).filter { it.color == COLOR_GREEN && it.secondaryColor == COLOR_GREEN}
     if(rallyFlags.isNotEmpty()) {
         code = moveTo(rallyFlags[0])
