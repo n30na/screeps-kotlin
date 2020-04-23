@@ -10,20 +10,24 @@ abstract class CreepBodyBuilder {
     abstract fun minEnergyWithin(energy: Int): Int
     abstract fun genBody(energy: Int): Array<BodyPartConstant>
 
-    fun calcBodyCost(body: Array<BodyPartConstant>): Int {
-        var cost = 0
-
-        for(part in body) cost += BODYPART_COST[part] ?: 0
-
-        return cost
-    }
     fun canSpawn(energy: Int): Boolean {
         return minEnergyWithin(energy) != 0
     }
+
+    companion object {
+        fun calcBodyCost(body: Array<BodyPartConstant>): Int {
+            var cost = 0
+
+            for(part in body) cost += BODYPART_COST[part] ?: 0
+
+            return cost
+        }
+    }
 }
 
-class FixedBody(val body: Array<BodyPartConstant>): CreepBodyBuilder() {
+class FixedBody(public val body: Array<BodyPartConstant>): CreepBodyBuilder() {
     override val minEnergyToSpawn = calcBodyCost(body)
+    val cost = minEnergyToSpawn
 
     override fun genBody(energy: Int): Array<BodyPartConstant> {
         return if (energy >= minEnergyToSpawn)
@@ -69,20 +73,49 @@ class RatioBody(val partRatios: Map<BodyPartConstant, Int>, var maxMultiplier: I
         return returnBody.toTypedArray()
     }
 
+    fun genBodyByMultiplier(multiplier: Int): Array<BodyPartConstant> {
+        val returnBody: MutableList<BodyPartConstant> = mutableListOf()
+
+        for((part, count) in partRatios)
+            for(x in 1..count*multiplier) returnBody.add(part)
+
+        return returnBody.toTypedArray()
+    }
+
+    fun genBody(): Array<BodyPartConstant> = genBody(minEnergyToSpawn)
+
     override fun minEnergyWithin(energy: Int): Int {
         return (energy/minEnergyToSpawn)*minEnergyToSpawn
     }
 }
 
-class MixedBody(val prefix: Array<BodyPartConstant>, val partRatios: Map<BodyPartConstant, Int>, val postfix: Array<BodyPartConstant>, var maxMultiplier: Int = 0): CreepBodyBuilder() {
+class MixedBody(val prefix: FixedBody, val mainBody: RatioBody, val postfix: FixedBody, var maxMultiplier: Int = 0): CreepBodyBuilder() {
     init {
-        if(maxMultiplier == 0 || maxMultiplier > (50 - (prefix.size + postfix.size)) / partRatios.values.sum())
-            maxMultiplier =  (50 - (prefix.size + postfix.size)) / partRatios.values.sum()
+        maxMultiplier = minOf(maxMultiplier, mainBody.maxMultiplier)
+        if(maxMultiplier == 0 || maxMultiplier > (50 - (prefix.body.size + postfix.body.size)) / mainBody.partRatios.values.sum())
+            maxMultiplier =  (50 - (prefix.body.size + postfix.body.size)) / mainBody.partRatios.values.sum()
     }
+    constructor(prefix: Array<BodyPartConstant>, mainBody: Map<BodyPartConstant,Int>, postfix: Array<BodyPartConstant>, maxMultiplier: Int = 0)
+            : this(FixedBody(prefix), RatioBody(mainBody, maxMultiplier), FixedBody(postfix), maxMultiplier)
 
     override val minEnergyToSpawn: Int
-        get() {
+        get() = prefix.cost + mainBody.minEnergyToSpawn + postfix.cost
 
+    override fun minEnergyWithin(energy: Int): Int {
+        return ( (energy - prefix.cost - postfix.cost) / minEnergyToSpawn) * minEnergyToSpawn + prefix.cost + postfix.cost
+    }
+
+    override fun genBody(energy: Int): Array<BodyPartConstant> {
+        val returnBody: MutableList<BodyPartConstant> = mutableListOf()
+        val usableEnergy = energy - prefix.cost - postfix.cost
+
+        if(energy >= minEnergyToSpawn) {
+            val multiplier = minOf(usableEnergy/mainBody.minEnergyToSpawn, maxMultiplier)
+            returnBody.addAll(prefix.body)
+            returnBody.addAll(mainBody.genBodyByMultiplier(multiplier))
+            returnBody.addAll(postfix.body)
         }
-}
 
+        return returnBody.toTypedArray()
+    }
+}
