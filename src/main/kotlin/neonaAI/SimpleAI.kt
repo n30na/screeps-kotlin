@@ -39,7 +39,7 @@ fun gameLoop() {
 
 private fun spawnCreeps(room: Room) {
 
-    val genericBody = RatioBody(mapOf(WORK to 1, CARRY to 1, MOVE to 1), 5)
+    val genericBody = RatioBody(mapOf(WORK to 1, CARRY to 1, MOVE to 1), 6)
     val genericFighter = RatioBody(mapOf(TOUGH to 1, MOVE to 1, ATTACK to 1))
 
     if(room.find(FIND_HOSTILE_CREEPS).isNotEmpty() && room.roleCount(CreepRole.DEFENDER) < 2) {
