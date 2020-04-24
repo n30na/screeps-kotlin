@@ -4,6 +4,7 @@ package neonaAI
 import neonaAI.creep.*
 import screeps.api.*
 import screeps.api.structures.StructureSpawn
+import screeps.api.structures.StructureTower
 import screeps.utils.unsafe.delete
 import screeps.utils.unsafe.jsObject
 
@@ -28,10 +29,28 @@ fun gameLoop() {
             when (creep.memory.role) {
                 CreepRole.WORKER -> creep.roleWorker()
                 CreepRole.DEFENDER -> creep.roleDefender()
+                CreepRole.SOURCER -> creep.roleSourcer()
+                CreepRole.CARRY -> creep.roleCarry()
                 else -> creep.say("\uD83D\uDEAC")
             }
         } catch(exception: dynamic) {
             println("Error executing ${creep.name}: $exception")
+        }
+    }
+
+    val towers = mainSpawn.room.find(FIND_STRUCTURES).filter { it.structureType == STRUCTURE_TOWER }.map { it as StructureTower }
+
+    for(tower in towers) {
+        if (tower.store.getUsedCapacity(RESOURCE_ENERGY) >= 10) {
+            val targetHostile = tower.pos.findClosestByRange(FIND_HOSTILE_CREEPS)
+            if (targetHostile != null) {
+                tower.attack(targetHostile)
+            } else {
+                val targetFriendly = tower.pos.findClosestByRange(FIND_MY_CREEPS, opts = jsObject { filter = { it.hits < it.hitsMax } })
+                if (targetFriendly != null) {
+                    tower.heal(targetFriendly)
+                }
+            }
         }
     }
 
@@ -44,52 +63,12 @@ private fun spawnCreeps(room: Room) {
 
     if(room.find(FIND_HOSTILE_CREEPS).isNotEmpty() && room.roleCount(CreepRole.DEFENDER) < 2) {
         room.spawnCreep(genericFighter, CreepRole.DEFENDER)
-    } else if(room.creepCount() < 1) {
+    } else if(room.roleCount(CreepRole.WORKER) < 1) {
         room.spawnCreep(FixedBody(arrayOf(WORK,CARRY,MOVE)),CreepRole.WORKER)
     } else if(room.roleCount(CreepRole.WORKER) < 8) {
         room.spawnCreep(genericBody,CreepRole.WORKER)
     }
-
-
-
-//    if(room.find(FIND_HOSTILE_CREEPS).isNotEmpty() && room.roleCount(CreepRole.DEFENDER) < 2) {
-//        val role = CreepRole.DEFENDER
-//        val newName = "${role.name}_${Game.time}"
-//        val spawns = room.availableSpawns()
-//        val body: CreepBodyBuilder =  genericFighter
-//
-//        if(spawns.isNotEmpty() && body.minEnergyToSpawn <= room.energyAvailable) {
-//            val code = spawns[0].spawnCreep(body.genBody(room.energyAvailable), newName, options {
-//                memory = jsObject<CreepMemory> { this.role = role; this.homeRoom = room.name }
-//            })
-//            when (code) {
-//                OK -> console.log("spawning $newName with body ${body.genBody(room.energyAvailable)}")
-//                ERR_BUSY -> run { } // do nothing
-//                ERR_NOT_ENOUGH_ENERGY -> run {}
-//                else -> console.log("unhandled error code $code")
-//            }
-//        }
-//    } else if(room.roleCount(CreepRole.WORKER) < 8) {
-//            val role = CreepRole.WORKER
-//            val newName = "${role.name}_${Game.time}"
-//            val spawns = room.availableSpawns()
-//            val body: CreepBodyBuilder =
-//                if(room.creepCount() < 1) FixedBody(arrayOf(WORK, CARRY, MOVE))
-//                else genericBody
-//
-//            if(spawns.isNotEmpty() && body.minEnergyWithin(room.energyCapacityAvailable) <= room.energyAvailable) {
-//                val code = spawns[0].spawnCreep(body.genBody(room.energyCapacityAvailable), newName, options {
-//                    memory = jsObject<CreepMemory> { this.role = role; this.homeRoom = room.name }
-//                })
-//                when (code) {
-//                    OK -> console.log("spawning $newName with body ${body.genBody(room.energyCapacityAvailable)}")
-//                    ERR_BUSY -> run { } // do nothing
-//                    ERR_NOT_ENOUGH_ENERGY -> run {}
-//                    else -> console.log("unhandled error code $code")
-//                }
-//            }
-//        }
-    }
+}
 
 private fun houseKeeping(creeps: Record<String, Creep>) {
     for ((creepName, _) in Memory.creeps) {
