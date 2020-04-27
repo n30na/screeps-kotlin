@@ -1,12 +1,7 @@
 package neonaAI
 
-import neonaAI.creep.FixedBody
-import neonaAI.creep.CreepRole
-import neonaAI.creep.WorkAction
-import screeps.api.MOVE
-import screeps.api.Memory
-import screeps.api.RoomMemory
-import screeps.api.WORK
+import neonaAI.creep.*
+import screeps.api.*
 import screeps.utils.memory.memory
 
 enum class RoomStage {
@@ -23,7 +18,7 @@ var workPriorities = mapOf<WorkAction,Int>(
         WorkAction.UPGRADING to 4,
         WorkAction.WAITING to 10
 )
-val baseRoleMinimums: Map<RoomStage,Map<CreepRole,Int>> = mapOf<RoomStage,Map<CreepRole,Int>>(
+val baseRoleMinimums: Map<RoomStage,Map<CreepRole,Int>> = mapOf(
     RoomStage.HARVESTING to mapOf(
             CreepRole.WORKER to 8
     ),
@@ -37,7 +32,16 @@ val baseRoleMinimums: Map<RoomStage,Map<CreepRole,Int>> = mapOf<RoomStage,Map<Cr
             CreepRole.CARRY to 2
     )
 )
-val sourcerBody = FixedBody(arrayOf(WORK,WORK,WORK,WORK,WORK,MOVE))
+
+val standardBody: Map<CreepRole, CreepBodyBuilder> = mapOf(
+        CreepRole.WORKER to RatioBody(mapOf(WORK to 1, CARRY to 1, MOVE to 1), 6),
+        CreepRole.DEFENDER to RatioBody(mapOf(TOUGH to 1, MOVE to 1, ATTACK to 1)),
+        CreepRole.SOURCER to FixedBody(arrayOf(WORK, WORK, WORK, WORK, WORK, WORK, MOVE, MOVE)),
+        CreepRole.CARRY to RatioBody(mapOf(CARRY to 2, MOVE to 1), 8),
+        CreepRole.RESERVER to FixedBody(arrayOf(CLAIM, CLAIM, MOVE, MOVE)),
+        CreepRole.UPGRADER to RatioBody(mapOf(WORK to 2, CARRY to 2, MOVE to 1), 5),
+        CreepRole.UNASSIGNED to RatioBody(mapOf(WORK to 1, CARRY to 1, MOVE to 1), 5)
+)
 
 var Memory.statusTimer: Int by memory { 0 }
 

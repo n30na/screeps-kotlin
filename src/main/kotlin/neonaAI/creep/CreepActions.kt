@@ -154,3 +154,28 @@ fun Creep.runActionFill(): ScreepsReturnCode {  // TODO: redo, make better, etc
 fun Creep.cajole() { // TODO: implement
 
 }
+
+fun Creep.moveByTimer(): Boolean { //TODO: implement
+    if(memory.moveTimer > 0) {
+        val lTargetPos = targetPos
+        if(lTargetPos != null) {
+            if(moveTo(lTargetPos) == OK) memory.lastMoved = Game.time
+            memory.moveTimer--
+            memory.movingByTimer = true
+            return true
+        } else memory.moveTimer = 0
+    } else {
+        val lTargetPos = targetPos
+        if(lTargetPos != null) {
+            if((memory.targetRanged && pos.inRangeTo(lTargetPos, 3)) || (!memory.targetRanged && pos.isNearTo(lTargetPos))) {
+                memory.movingByTimer = false
+                return false
+            } else {
+
+            }
+        } else {
+            memory.movingByTimer = false
+            return false
+        }
+    }
+}

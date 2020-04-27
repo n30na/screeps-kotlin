@@ -119,7 +119,7 @@ fun Room.availableSpawns(): List<StructureSpawn> {
     return spawns
 }
 
-fun Room.spawnCreep(body: CreepBodyBuilder, role: CreepRole) {
+fun Room.spawnCreep(body: CreepBodyBuilder, role: CreepRole, energy: Int = energyCapacityAvailable) { // TODO: implement energy parameter
     val newName = "${role.name}_${Game.time}"
     val spawns = availableSpawns()
 

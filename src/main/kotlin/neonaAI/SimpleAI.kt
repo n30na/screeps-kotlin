@@ -26,6 +26,7 @@ fun gameLoop() {
 
     for ((_, creep) in Game.creeps) {
         try {
+            creep.preRole()
             when (creep.memory.role) {
                 CreepRole.WORKER -> creep.roleWorker()
                 CreepRole.DEFENDER -> creep.roleDefender()
@@ -33,6 +34,7 @@ fun gameLoop() {
                 CreepRole.CARRY -> creep.roleCarry()
                 else -> creep.say("\uD83D\uDEAC")
             }
+            creep.postRole()
         } catch(exception: dynamic) {
             println("Error executing ${creep.name}: $exception")
         }
@@ -63,11 +65,22 @@ private fun spawnCreeps(room: Room) {
 
     if(room.find(FIND_HOSTILE_CREEPS).isNotEmpty() && room.roleCount(CreepRole.DEFENDER) < 2) {
         room.spawnCreep(genericFighter, CreepRole.DEFENDER)
-    } else if(room.roleCount(CreepRole.WORKER) < 1) {
+    } else if(room.creepCount() < 1) {
         room.spawnCreep(FixedBody(arrayOf(WORK,CARRY,MOVE)),CreepRole.WORKER)
-    } else if(room.roleCount(CreepRole.WORKER) < 8) {
-        room.spawnCreep(genericBody,CreepRole.WORKER)
+    } else  {
+        val minimums = baseRoleMinimums[room.memory.roomStage]
+
+        if (minimums != null) {
+            for ((role, count) in minimums) {
+                if (room.roleCount(role) < count || (role == CreepRole.SOURCER && room.roleCount(CreepRole.SOURCER) < room.find(FIND_SOURCES).size)) {
+                    room.spawnCreep(standardBody[role] ?:FixedBody(arrayOf()), role)
+                    break
+                }
+            }
+        }
     }
+
+
 }
 
 private fun houseKeeping(creeps: Record<String, Creep>) {

@@ -1,8 +1,11 @@
 package neonaAI.creep
 
+import neonaAI.container
 import neonaAI.needsLabor
 import neonaAI.requiredEnergy
+import neonaAI.sourcer
 import screeps.api.*
+import screeps.api.structures.StructureContainer
 
 
 enum class CreepRole {
@@ -27,6 +30,15 @@ enum class WorkAction {
     MOVING,
     WALLREPAIR,
     FILLING
+}
+
+
+fun Creep.preRole() {
+
+}
+
+fun Creep.postRole() {
+
 }
 
 
@@ -65,14 +77,37 @@ fun Creep.roleWorker() {
 }
 
 fun Creep.roleSourcer() {
+    if(permanentTarget == null) {
+        val sources = room.find(FIND_SOURCES)
+        for (source in sources) {
+            val container = source.container
+            if(source.sourcer == null && container != null) {
+                permanentTarget = container.pos
+                break
+            }
+        }
+        if (permanentTarget == null) {
+            idleRally()
+            return
+        }
+    }
+    val target = permanentTarget
+    if (target != null) {
+        if (pos.inRangeTo(target, 0)) {
+            val source = pos.findInRange(FIND_SOURCES_ACTIVE, 1)
+            if(source.isNotEmpty()) {
+                harvest(source.first())
+            }
+        } else moveTo(target)
+    }
+}
+
+fun Creep.roleCarry() { // TODO: implement
+
 
 }
 
-fun Creep.roleCarry() {
-
-}
-
-fun Creep.roleReserver() {
+fun Creep.roleReserver() { //TODO: impement
 
 }
 
@@ -89,6 +124,6 @@ fun Creep.roleDefender() {
         idleRally()
 }
 
-fun Creep.roleAttacker() {
+fun Creep.roleAttacker() { // TODO: implement
 
 }
