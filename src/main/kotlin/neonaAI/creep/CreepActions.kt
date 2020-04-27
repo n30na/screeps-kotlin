@@ -155,6 +155,10 @@ fun Creep.cajole() { // TODO: implement
 
 }
 
+fun Creep.startMoveByTimer() {
+
+}
+
 fun Creep.moveByTimer(): Boolean { //TODO: implement
     if(memory.moveTimer > 0) {
         val lTargetPos = targetPos

@@ -123,12 +123,12 @@ fun Room.spawnCreep(body: CreepBodyBuilder, role: CreepRole, energy: Int = energ
     val newName = "${role.name}_${Game.time}"
     val spawns = availableSpawns()
 
-    if(spawns.isNotEmpty() && body.minEnergyWithin(energyCapacityAvailable) <= energyAvailable) {
-        val code = spawns[0].spawnCreep(body.genBody(energyCapacityAvailable), newName, options {
+    if(spawns.isNotEmpty() && body.minEnergyWithin(energy) <= energyAvailable) {
+        val code = spawns[0].spawnCreep(body.genBody(energy), newName, options {
             memory = screeps.utils.unsafe.jsObject<CreepMemory> { this.role = role; this.homeRoom = name }
         })
         when (code) {
-            OK -> console.log("spawning $newName with body ${body.genBody(energyCapacityAvailable)}")
+            OK -> console.log("spawning $newName with body ${body.genBody(energy)}")
             ERR_BUSY, ERR_NOT_ENOUGH_ENERGY -> run { } // do nothing
             else -> console.log("unhandled error code $code")
         }
